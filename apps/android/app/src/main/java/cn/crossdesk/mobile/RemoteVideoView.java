@@ -29,6 +29,8 @@ final class RemoteVideoView extends FrameLayout implements SurfaceHolder.Callbac
     private final float pinchSlop;
     private final RemoteViewport viewport = new RemoteViewport();
     private final RemoteViewport pictureInPictureViewport = new RemoteViewport();
+    private final RemoteWheel wheelInput = new RemoteWheel();
+    private static final int MAX_WHEEL_NOTCHES = 8;
     private boolean pictureInPicture;
     private int frameWidth = 16, frameHeight = 9;
     private float x = .5f, y = .5f, scrollY;
@@ -78,15 +80,83 @@ final class RemoteVideoView extends FrameLayout implements SurfaceHolder.Callbac
         gestures.setOnDoubleTapListener(null);
         // Detect a change in finger spacing even when the fingers start close together.
         pinchSlop = ViewConfiguration.get(context).getScaledTouchSlop() * .5f;
-        cursor.setOnGenericMotionListener((v, event) -> {
-            if (!point(event)) return true;
-            if (event.getActionMasked() == MotionEvent.ACTION_SCROLL) {
-                float delta = event.getAxisValue(MotionEvent.AXIS_VSCROLL);
-                if (delta != 0) session.pointer(x, y, 7, delta > 0 ? 1 : -1);
-            }
-            return true;
-        });
         setContentDescription(L10n.tr("远程桌面：轻触点击，拖动移动，长按右键，双指捏合缩放，放大后双指拖动画面，原始比例下双指上下滑动滚动"));
+    }
+    /**
+     * Handles mouse hover and wheel for the session. The activity forwards these
+     * events here instead of relying on child hit-testing, because ACTION_SCROLL
+     * is not reliably delivered to the hovered view: the page column takes focus
+     * in touch mode, and non-hover generic motion follows the focus chain on
+     * several Android builds and vendor ROMs, so the surface never saw the wheel.
+     *
+     * Wheel deltas are read from the VSCROLL / HSCROLL axes of every accepted
+     * event, not only from ACTION_SCROLL: some ROMs attach the axes to hover
+     * moves, and a few emit a plain ACTION_MOVE carrying wheel data. An
+     * ACTION_MOVE with no wheel delta is left to the normal dispatch chain, so
+     * it cannot swallow events that belong to child views.
+     *
+     * @return true when the event belonged to the session and was consumed.
+     */
+    boolean mouseGenericMotion(MotionEvent event) {
+        int action = event.getActionMasked();
+        boolean pointer = action == MotionEvent.ACTION_SCROLL || action == MotionEvent.ACTION_HOVER_ENTER
+                || action == MotionEvent.ACTION_HOVER_MOVE || action == MotionEvent.ACTION_HOVER_EXIT;
+        // A few vendor stacks report the wheel on ACTION_MOVE instead of
+        // ACTION_SCROLL. Accept it only when it really carries a wheel delta.
+        boolean wheelOnMove = action == MotionEvent.ACTION_MOVE
+                && (axis(event, MotionEvent.AXIS_VSCROLL) != 0 || axis(event, MotionEvent.AXIS_HSCROLL) != 0);
+        if (!pointer && !wheelOnMove) return false;
+        if (action == MotionEvent.ACTION_HOVER_EXIT) {
+            // A new gesture must not inherit the previous direction's remainder.
+            wheelInput.reset();
+            return true;
+        }
+        if (pictureInPicture || mouseInput.hasVirtualButton()) return true;
+        // Locate the pointer before the wheel so the notch lands under the cursor.
+        trackPointer(event);
+        scroll(event);
+        return true;
+    }
+    /** Moves the remote pointer to the reported device position. */
+    private void trackPointer(MotionEvent event) {
+        if (viewport.width() <= 0 || viewport.height() <= 0) return;
+        float px = event.getX(), py = event.getY();
+        if (!Float.isFinite(px) || !Float.isFinite(py)) return;
+        if (viewport.contains(px, py)
+                && viewport.panForAbsolutePointer(px, py, 18 * getResources().getDisplayMetrics().density)) {
+            applyViewport();
+        }
+        // A wheel notch over the letterbox still targets the nearest image edge.
+        float nextX = viewport.normalizedX(px), nextY = viewport.normalizedY(py);
+        // A wheel notch must not be preceded by a redundant stream of moves.
+        if (nextX != x || nextY != y) mouseInput.move(nextX, nextY);
+        // scroll() sends at (x, y), so keep both in sync with the move above.
+        x = nextX; y = nextY;
+        lastX = px; lastY = py;
+    }
+    /**
+     * Maps one motion event onto whole wheel notches. Android reports a notch as
+     * 1.0, but high-resolution wheels, smooth-scrolling drivers and vendor
+     * stacks send fractions, which {@link RemoteWheel} carries over instead of
+     * dropping. A zero delta is ignored so plain hover moves stay pointer moves.
+     */
+    private void scroll(MotionEvent event) {
+        float vertical = axis(event, MotionEvent.AXIS_VSCROLL);
+        float horizontal = axis(event, MotionEvent.AXIS_HSCROLL);
+        if (vertical == 0 && horizontal == 0) return;
+        boolean useVertical = Math.abs(vertical) >= Math.abs(horizontal);
+        int notches = wheelInput.consume(useVertical, useVertical ? vertical : horizontal);
+        if (notches == 0) return;
+        notches = Math.max(-MAX_WHEEL_NOTCHES, Math.min(MAX_WHEEL_NOTCHES, notches));
+        // Flag 7 is the vertical wheel and flag 8 the horizontal wheel; a
+        // positive notch scrolls up or right, matching the desktop protocol.
+        session.pointer(x, y, useVertical ? 7 : 8, notches);
+        cursor.invalidate();
+    }
+    /** Devices that omit an axis report NaN rather than zero. */
+    private static float axis(MotionEvent event, int axis) {
+        float value = event.getAxisValue(axis);
+        return Float.isFinite(value) ? value : 0;
     }
     void videoSize(int width, int height) {
         if (width <= 0 || height <= 0) return;

@@ -139,7 +139,15 @@ final class MobileUi {
                     paint.setStyle(Paint.Style.FILL);int keyColor=paint.getColor();paint.setColor(Color.WHITE);c.drawCircle(6,7,1.5f,paint);paint.setColor(keyColor);break;
                 case "unlock":c.drawRoundRect(5,10,19,22,2,2,paint);c.drawArc(8,2,16,15,180,150,false,paint);c.drawPoint(12,16,paint);break;
                 case "clipboard":c.drawRoundRect(4,4,20,22,2,2,paint);c.drawRoundRect(8,2,16,7,2,2,paint);break;
-                case "eye":path(c,2,12,6,7,12,5,18,7,22,12,18,17,12,19,6,17,2,12);c.drawCircle(12,12,3,paint);break;
+                case "eye":
+                    path(c,2,12,6,7,12,5,18,7,22,12,18,17,12,19,6,17,2,12);c.drawCircle(12,12,3,paint);break;
+                case "fullscreen":
+                    // Four outward corner brackets.
+                    path(c,3,9,3,3,9,3);path(c,15,3,21,3,21,9);
+                    path(c,21,15,21,21,15,21);path(c,9,21,3,21,3,15);break;
+                case "fullscreen_exit":
+                    path(c,8,3,8,8,3,8);path(c,16,3,16,8,21,8);
+                    path(c,21,16,16,16,16,21);path(c,3,16,8,16,8,21);break;
                 case "eye_off":
                     Path hiddenEye=new Path();
                     hiddenEye.moveTo(10,5);hiddenEye.cubicTo(15,4,19,8,22,12);

@@ -90,6 +90,8 @@ public final class MainActivity extends Activity implements NativeSession.Listen
     private int port,selectedDisplay;
     private JSONArray displays=new JSONArray();
     private boolean muted,ready,rememberPassword;
+    /** Session system-bar policy: true hides status and navigation bars. */
+    private boolean fullScreen;
     private boolean remoteServiceAvailable;
     private static final int PICK_FILE=41,SAVE_FILE=42;
     private NativeSession documentSession;
@@ -157,11 +159,28 @@ public final class MainActivity extends Activity implements NativeSession.Listen
         root.setFocusableInTouchMode(true);pageHost.show(canvas,motion);
         applySystemBars();
     }
+    /** The session keeps its fullscreen choice; multi-window and PiP cannot honour it. */
+    private boolean immersiveSession() {
+        return "session".equals(page) && fullScreen
+                && !isInMultiWindowMode() && !isInPictureInPictureMode();
+    }
+    private void toggleFullScreen() {
+        // Toggle the stored choice, not the effective state: multi-window and
+        // PiP always show the bars, but the preference must still flip so the
+        // menu label and a later return to full-screen stay consistent.
+        boolean next = !fullScreen;
+        fullScreen = next;
+        preferences.edit().putBoolean("sessionFullscreen", next).apply();
+        applySystemBars();
+        // Bars change the usable area; video, cursor and panels follow the insets.
+        if (safeArea != null) safeArea.requestApplyInsets();
+        if (controls != null) controls.setFullScreen(next);
+    }
     // Android 8–10 require system UI flags instead of WindowInsetsController.
     @SuppressWarnings("deprecation")
     private void applySystemBars() {
         boolean sessionPage = "session".equals(page);
-        boolean immersive = sessionPage && !isInMultiWindowMode();
+        boolean immersive = immersiveSession();
         if (android.os.Build.VERSION.SDK_INT >= 30) {
             WindowInsetsController controller = getWindow().getInsetsController();
             if (controller == null) return;
@@ -173,6 +192,7 @@ public final class MainActivity extends Activity implements NativeSession.Listen
                 controller.setSystemBarsBehavior(WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
                 controller.hide(bars);
             } else {
+                controller.setSystemBarsBehavior(WindowInsetsController.BEHAVIOR_DEFAULT);
                 controller.show(bars);
             }
         } else {
@@ -536,6 +556,8 @@ public final class MainActivity extends Activity implements NativeSession.Listen
         dialog.setContentView(card);dialog.setCanceledOnTouchOutside(false);dialog.setOnCancelListener(d->end(""));Window w=dialog.getWindow();if(w!=null){w.setBackgroundDrawableResource(android.R.color.transparent);w.setDimAmount(.08f);}dialog.show();if(w!=null)w.setLayout(dp(292),-2);
     }
     private void sessionScreen(boolean autoLandscape){
+        // Fullscreen defaults on for phones and tablets; the choice survives reconnect.
+        fullScreen=preferences.getBoolean("sessionFullscreen",true);
         installRoot("session",true);remoteOrientation.begin(autoLandscape,!isTablet()&&!isInMultiWindowMode());video=new RemoteVideoView(this,session);video.setRelative(preferences.getBoolean("relativeMouse",true));
         // Video, cursor and touch input must share the area inside system bars
         // and display cutouts; fitting to the outer canvas hides image edges.
@@ -544,6 +566,7 @@ public final class MainActivity extends Activity implements NativeSession.Listen
             public void disconnect(){confirmDisconnect();}public void display(){selectDisplay();}public void clipboard(){MainActivity.this.clipboard();}
             public void sendFile(){chooseFile();}public void saveFile(){saveReceivedFile();}public void secureAttention(){MainActivity.this.secureAttention();}
             public void togglePrivacy(){if(ready&&session!=null)session.togglePrivacy();}
+            public void toggleFullScreen(){MainActivity.this.toggleFullScreen();}
             public void key(int code){tapKey(code);}
             public boolean textEdit(int count,String value){return sendTextEdit(count,value);}
             public void chord(int code,int[] modifiers){if(ready&&session!=null)session.chord(code,modifiers);}public void shortcut(int code){MainActivity.this.shortcut(code);}public void text(String value){sendText(value);}
@@ -551,7 +574,7 @@ public final class MainActivity extends Activity implements NativeSession.Listen
             public void mouse(){boolean relative=!preferences.getBoolean("relativeMouse",true);preferences.edit().putBoolean("relativeMouse",relative).apply();video.setRelative(relative);controls.setRelative(relative);}
             public void displayResolution(RemoteDisplayResolutions.Mode mode){updateDisplayResolution(mode);}
             public void videoSettings(int field,int value){RemoteVideoSettings.Values old=MainActivity.this.videoSettings.selection;updateVideoSettings(new RemoteVideoSettings.Values(field==0?value:old.quality,field==1?value:old.frameRate,field==2?value:old.preference));}
-        });controls.setHostPlatform(hostPlatform);controls.setRelative(preferences.getBoolean("relativeMouse",true));controls.setMuted(muted);controls.videoSettings(videoSettings);controls.displayResolutions(displayResolutions,selectedDisplay);root.addView(controls,new LinearLayout.LayoutParams(-1,-1));getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        });controls.setHostPlatform(hostPlatform);controls.setRelative(preferences.getBoolean("relativeMouse",true));controls.setFullScreen(fullScreen);controls.setMuted(muted);controls.videoSettings(videoSettings);controls.displayResolutions(displayResolutions,selectedDisplay);root.addView(controls,new LinearLayout.LayoutParams(-1,-1));getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         controls.attachMouseBar(safeArea,safeArea.indexOfChild(root),new VirtualMouseBar(ui,video.mouseInput));
         privacyChanged();
         video.remoteFocusChanged=()->{if(controls!=null)controls.resetKeyboardContext();};
@@ -993,6 +1016,24 @@ public final class MainActivity extends Activity implements NativeSession.Listen
     @Override public void videoSize(int width,int height){videoWidth=width;videoHeight=height;if(video!=null)video.videoSize(width,height);if(controls!=null)controls.videoSize(width,height);pictureInPicture.videoSize(width,height);updatePictureInPicture();}
     @Override public void clipboard(String value){remoteClipboard=value;}
     @Override public void statistics(RemoteNetworkStatistics.Snapshot value){if(controls!=null)controls.statistics(value);if(value.fps>0)capturePreviewIfNeeded();}
+    // Generic motion (mouse hover and wheel) bypasses the touch hit-test chain.
+    // Forwarding it here gives the video surface the wheel regardless of which
+    // child holds focus, which the old cursor-view listener did not guarantee.
+    @Override public boolean dispatchGenericMotionEvent(MotionEvent event){
+        if(ready&&video!=null&&!pictureInPictureUi&&hasWindowFocus()&&isMouseSource(event)){
+            // The open control menu is modal and scrolls itself. A dialog has
+            // its own window and takes focus, so hasWindowFocus() excludes it.
+            if(controls==null||!controls.holdsMouseWheel()){
+                if(video.mouseGenericMotion(event))return true;
+            }
+        }
+        return super.dispatchGenericMotionEvent(event);
+    }
+    /** Mice and trackpads both set SOURCE_MOUSE, often with extra source bits. */
+    private static boolean isMouseSource(MotionEvent event){
+        int source=event.getSource();
+        return (source&InputDevice.SOURCE_MOUSE)==InputDevice.SOURCE_MOUSE;
+    }
     @Override public boolean dispatchKeyEvent(KeyEvent event){
         if (privacyUnlockDialog != null) return super.dispatchKeyEvent(event);
         int code=KeyMap.windowsCode(event.getKeyCode());View focus=getCurrentFocus();
@@ -1022,6 +1063,8 @@ public final class MainActivity extends Activity implements NativeSession.Listen
         releaseKeys();
         if(!page.equals("session"))updateHomeOrientation();
         else if(!isInPictureInPictureMode())remoteOrientation.update(!isTablet()&&!isInMultiWindowMode());
+        // A rotation can restore hidden bars; re-assert the session's choice.
+        if(page.equals("session"))applySystemBars();
         sizePasswordDialog();
         if(privacyDialog instanceof PrivacyConsentDialog)((PrivacyConsentDialog)privacyDialog).updateSize();
         if(controls!=null&&!pictureInPictureUi)controls.post(controls::constrainPanels);
@@ -1082,7 +1125,7 @@ public final class MainActivity extends Activity implements NativeSession.Listen
         videoSettings=retained.videoSettings;displayResolutions=retained.displayResolutions;ready=true;retained.attach(this);
         if(rebuild)sessionScreen(retained.autoLandscape);
         if(retained.width>0&&retained.height>0)videoSize(retained.width,retained.height);
-        if(controls!=null){controls.setHostPlatform(hostPlatform);controls.setMuted(muted);controls.videoSettings(videoSettings);controls.displayResolutions(displayResolutions,selectedDisplay);controls.fileStatus(retained.fileStatus,receivedFile!=null);}
+        if(controls!=null){controls.setHostPlatform(hostPlatform);controls.setFullScreen(fullScreen);controls.setMuted(muted);controls.videoSettings(videoSettings);controls.displayResolutions(displayResolutions,selectedDisplay);controls.fileStatus(retained.fileStatus,receivedFile!=null);}
         retained.setBackground(false);signaling(signalState,localIdentity);
         return true;
     }
@@ -1122,6 +1165,7 @@ public final class MainActivity extends Activity implements NativeSession.Listen
     }
     @Override public void onPictureInPictureModeChanged(boolean active,Configuration config){
         super.onPictureInPictureModeChanged(active,config);if(active)enteredPictureInPicture=true;setPictureInPictureUi(active);
+        applySystemBars();
         if(!active&&video!=null)video.post(this::updatePictureInPicture);
     }
     @android.annotation.TargetApi(31)

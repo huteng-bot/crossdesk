@@ -398,6 +398,8 @@ final class LocalizationKeys {
         IDS.put("删除分组", R.string.text_7605c1d82eed69a5);
         IDS.put("组内设备和连接记录将保留。", R.string.text_b113e4e040b875a8);
         IDS.put("保存失败，请重试", R.string.text_f42a1238b44a4858);
+        IDS.put("全屏", R.string.text_22ea3f47fee80536);
+        IDS.put("退出全屏", R.string.text_0f1505b6ad3fafe4);
     }
     private LocalizationKeys() {}
 }

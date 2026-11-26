@@ -392,4 +392,6 @@
     <string name="text_7605c1d82eed69a5" formatted="false">"刪除分組"</string>
     <string name="text_b113e4e040b875a8" formatted="false">"組內裝置和連線記錄將保留。"</string>
     <string name="text_f42a1238b44a4858" formatted="false">"儲存失敗，請重試"</string>
+    <string name="text_22ea3f47fee80536" formatted="false">"全屏"</string>
+    <string name="text_0f1505b6ad3fafe4" formatted="false">"退出全屏"</string>
 </resources>

@@ -18,6 +18,7 @@ final class SessionControls extends FrameLayout {
         default void displayResolution(RemoteDisplayResolutions.Mode mode) { }
         void sendFile(); void saveFile(); void secureAttention();
         default void togglePrivacy() { }
+        default void toggleFullScreen() { }
     }
     private final MobileUi ui;
     private final Actions actions;
@@ -61,6 +62,8 @@ final class SessionControls extends FrameLayout {
     private boolean endpointsExpanded;
     private View encryptionLock,encryptionOpen;
     private boolean muted,relative=true,orbPositioned,secureAttentionVisible;
+    /** Mirrors MainActivity's system-bar policy so the menu label stays accurate. */
+    private boolean fullScreen=true;
     SessionControls(Context context,MobileUi ui,IntConsumer keyboardInsetChanged,Actions actions){
         super(context);this.ui=ui;this.actions=actions;
         this.keyboardInsetChanged = keyboardInsetChanged;
@@ -76,6 +79,16 @@ final class SessionControls extends FrameLayout {
         drag(orb,orb,()->{if(menu==null)openMenu("controls");else closeMenu();});
     }
     void setRelative(boolean value){relative=value;if(menu!=null&&menuPage.equals("controls"))openMenu("controls");}
+    /**
+     * The open menu is modal: its own scroll view keeps the wheel, and the
+     * shield keeps the rest, so nothing must reach the remote desktop.
+     */
+    boolean holdsMouseWheel(){return menu!=null&&menu.isShown();}
+    void setFullScreen(boolean value){
+        if(fullScreen==value)return;
+        fullScreen=value;
+        if(menu!=null)openMenu(menuPage);
+    }
     void setHostPlatform(String platform){
         keyboard.setPlatform(platform);
         boolean visible="windows".equals(platform);
@@ -153,9 +166,9 @@ final class SessionControls extends FrameLayout {
             scroll.setScrollBarStyle(View.SCROLLBARS_OUTSIDE_INSET);body.setPadding(0,0,ui.dp(6),0);
         }
         if(page.equals("controls")){
-            String[] labels={L10n.tr("键盘"),mouseVisible?L10n.tr("收起鼠标"):L10n.tr("虚拟鼠标"),relative?L10n.tr("相对鼠标"):L10n.tr("绝对鼠标"),L10n.tr("显示器"),L10n.tr("画面设置"),muted?L10n.tr("静音"):L10n.tr("声音"),L10n.tr("发送文件"),L10n.tr("网络状态"),"Ctrl+Alt+Del",L10n.tr("剪贴板"),L10n.tr("隐私屏")};
-            String[] icons={"keyboard","mouse","mouse","display","sliders","audio","folder","chart","lock","clipboard","eye"};
-            Runnable[] clicks={()->{closeMenu();toggleKeyboard();},this::toggleMouse,actions::mouse,actions::display,()->openMenu("video"),actions::mute,actions::sendFile,()->openMenu("network"),actions::secureAttention,actions::clipboard,actions::togglePrivacy};
+            String[] labels={L10n.tr("键盘"),mouseVisible?L10n.tr("收起鼠标"):L10n.tr("虚拟鼠标"),relative?L10n.tr("相对鼠标"):L10n.tr("绝对鼠标"),L10n.tr("显示器"),L10n.tr("画面设置"),muted?L10n.tr("静音"):L10n.tr("声音"),L10n.tr("发送文件"),L10n.tr("网络状态"),"Ctrl+Alt+Del",L10n.tr("剪贴板"),L10n.tr("隐私屏"),fullScreen?L10n.tr("退出全屏"):L10n.tr("全屏")};
+            String[] icons={"keyboard","mouse","mouse","display","sliders","audio","folder","chart","lock","clipboard","eye",fullScreen?"fullscreen_exit":"fullscreen"};
+            Runnable[] clicks={()->{closeMenu();toggleKeyboard();},this::toggleMouse,actions::mouse,actions::display,()->openMenu("video"),actions::mute,actions::sendFile,()->openMenu("network"),actions::secureAttention,actions::clipboard,actions::togglePrivacy,()->{closeMenu();actions.toggleFullScreen();}};
             menuColumns=controlColumns();
             java.util.List<Integer> visibleControls=new java.util.ArrayList<>();
             for(int index=0;index<labels.length;index++){
