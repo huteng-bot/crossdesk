@@ -394,4 +394,9 @@
     <string name="text_f42a1238b44a4858" formatted="false">"Konnte nicht gespeichert werden; Versuchen Sie es noch einmal"</string>
     <string name="text_22ea3f47fee80536" formatted="false">"Vollbild"</string>
     <string name="text_0f1505b6ad3fafe4" formatted="false">"Vollbild beenden"</string>
+    <string name="text_7eb336e42cb5076b" formatted="false">"Automatisch"</string>
+    <string name="text_4be8ef31832c6fae" formatted="false">"Ein-Finger-Wischen"</string>
+    <string name="text_285ffeb6233ebfc2" formatted="false">"Zeiger bewegen"</string>
+    <string name="text_449dfbcab15f2900" formatted="false">"Seite scrollen"</string>
+    <string name="text_5c46c07b97d7f3ac" formatted="false">"Meldet das System das Mausrad als Ein-Finger-Wischen, wählen Sie „Seite scrollen“. „Automatisch“ gilt nur für Maus und Touchpad und ändert die Fingerbedienung nicht."</string>
 </resources>

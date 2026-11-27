@@ -394,4 +394,9 @@
     <string name="text_f42a1238b44a4858" formatted="false">"Не удалось сохранить. Повторите попытку"</string>
     <string name="text_22ea3f47fee80536" formatted="false">"На весь экран"</string>
     <string name="text_0f1505b6ad3fafe4" formatted="false">"Выйти из полноэкранного режима"</string>
+    <string name="text_7eb336e42cb5076b" formatted="false">"Авто"</string>
+    <string name="text_4be8ef31832c6fae" formatted="false">"Свайп одним пальцем"</string>
+    <string name="text_285ffeb6233ebfc2" formatted="false">"Двигать курсор"</string>
+    <string name="text_449dfbcab15f2900" formatted="false">"Прокрутка страницы"</string>
+    <string name="text_5c46c07b97d7f3ac" formatted="false">"Если система передаёт колесо мыши как свайп одним пальцем, выберите «Прокрутка страницы». Режим «Автоматически» действует только на мышь и тачпад и не меняет управление пальцем."</string>
 </resources>

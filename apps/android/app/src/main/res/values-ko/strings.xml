@@ -394,4 +394,9 @@
     <string name="text_f42a1238b44a4858" formatted="false">"저장할 수 없습니다. 다시 시도"</string>
     <string name="text_22ea3f47fee80536" formatted="false">"전체화면"</string>
     <string name="text_0f1505b6ad3fafe4" formatted="false">"전체 화면 종료"</string>
+    <string name="text_7eb336e42cb5076b" formatted="false">"자동"</string>
+    <string name="text_4be8ef31832c6fae" formatted="false">"한 손가락 밀기"</string>
+    <string name="text_285ffeb6233ebfc2" formatted="false">"포인터 이동"</string>
+    <string name="text_449dfbcab15f2900" formatted="false">"페이지 스크롤"</string>
+    <string name="text_5c46c07b97d7f3ac" formatted="false">"마우스 휠이 한 손가락 밀기로 인식될 때 “페이지 스크롤”을 선택하면 정상적으로 스크롤됩니다. 기본값인 “자동”은 마우스와 터치패드에만 적용되며 손가락 조작에는 영향을 주지 않습니다."</string>
 </resources>

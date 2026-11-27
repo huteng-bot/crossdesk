@@ -394,4 +394,9 @@
     <string name="text_f42a1238b44a4858" formatted="false">"保存できませんでした。もう一度試してください"</string>
     <string name="text_22ea3f47fee80536" formatted="false">"フルスクリーン"</string>
     <string name="text_0f1505b6ad3fafe4" formatted="false">"全画面表示を終了する"</string>
+    <string name="text_7eb336e42cb5076b" formatted="false">"オート"</string>
+    <string name="text_4be8ef31832c6fae" formatted="false">"1本指スワイプ"</string>
+    <string name="text_285ffeb6233ebfc2" formatted="false">"ポインタ移動"</string>
+    <string name="text_449dfbcab15f2900" formatted="false">"ページをスクロール"</string>
+    <string name="text_5c46c07b97d7f3ac" formatted="false">"マウスホイールが1本指スワイプとして認識される場合、「ページをスクロール」を選ぶと通常どおりスクロールします。既定の「自動」はマウスとタッチパッドにのみ適用され、指の操作には影響しません。"</string>
 </resources>

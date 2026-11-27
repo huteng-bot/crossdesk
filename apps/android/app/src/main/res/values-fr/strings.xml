@@ -394,4 +394,9 @@
     <string name="text_f42a1238b44a4858" formatted="false">"Impossible d\'enregistrer ; réessaye"</string>
     <string name="text_22ea3f47fee80536" formatted="false">"Plein écran"</string>
     <string name="text_0f1505b6ad3fafe4" formatted="false">"Quitter le mode plein écran"</string>
+    <string name="text_7eb336e42cb5076b" formatted="false">"Automatique"</string>
+    <string name="text_4be8ef31832c6fae" formatted="false">"Balayage à un doigt"</string>
+    <string name="text_285ffeb6233ebfc2" formatted="false">"Déplacer le pointeur"</string>
+    <string name="text_449dfbcab15f2900" formatted="false">"Faire défiler"</string>
+    <string name="text_5c46c07b97d7f3ac" formatted="false">"Si le système signale la molette comme un balayage à un doigt, choisissez « Faire défiler ». Le mode « Automatique » ne s’applique qu’à la souris et au pavé tactile."</string>
 </resources>

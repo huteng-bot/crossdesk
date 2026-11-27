@@ -394,4 +394,9 @@
     <string name="text_f42a1238b44a4858" formatted="false">"No se pudo guardar; intentarlo de nuevo"</string>
     <string name="text_22ea3f47fee80536" formatted="false">"Pantalla completa"</string>
     <string name="text_0f1505b6ad3fafe4" formatted="false">"Salir de pantalla completa"</string>
+    <string name="text_7eb336e42cb5076b" formatted="false">"Automático"</string>
+    <string name="text_4be8ef31832c6fae" formatted="false">"Deslizamiento con un dedo"</string>
+    <string name="text_285ffeb6233ebfc2" formatted="false">"Mover el puntero"</string>
+    <string name="text_449dfbcab15f2900" formatted="false">"Desplazar página"</string>
+    <string name="text_5c46c07b97d7f3ac" formatted="false">"Si el sistema informa la rueda del ratón como un deslizamiento con un dedo, elige «Desplazar página». El modo «Automático» solo afecta al ratón y al panel táctil."</string>
 </resources>

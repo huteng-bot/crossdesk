@@ -11915,6 +11915,54 @@
       "fr": "Les appareils et l’historique des connexions seront conservés.",
       "es": "Se conservarán los dispositivos y el historial de conexiones.",
       "pt-BR": "Os dispositivos e o histórico de conexões serão mantidos."
+    },
+    "单指滑动": {
+      "zh-Hans": "单指滑动",
+      "en": "One-finger swipe",
+      "ru": "Свайп одним пальцем",
+      "zh-Hant": "單指滑動",
+      "ja": "1本指スワイプ",
+      "ko": "한 손가락 밀기",
+      "de": "Ein-Finger-Wischen",
+      "fr": "Balayage à un doigt",
+      "es": "Deslizamiento con un dedo",
+      "pt-BR": "Deslizar com um dedo"
+    },
+    "移动指针": {
+      "zh-Hans": "移动指针",
+      "en": "Move pointer",
+      "ru": "Двигать курсор",
+      "zh-Hant": "移動指標",
+      "ja": "ポインタ移動",
+      "ko": "포인터 이동",
+      "de": "Zeiger bewegen",
+      "fr": "Déplacer le pointeur",
+      "es": "Mover el puntero",
+      "pt-BR": "Mover o ponteiro"
+    },
+    "滚动页面": {
+      "zh-Hans": "滚动页面",
+      "en": "Scroll page",
+      "ru": "Прокрутка страницы",
+      "zh-Hant": "捲動頁面",
+      "ja": "ページをスクロール",
+      "ko": "페이지 스크롤",
+      "de": "Seite scrollen",
+      "fr": "Faire défiler",
+      "es": "Desplazar página",
+      "pt-BR": "Rolar a página"
+    },
+    "外接鼠标的滚轮被系统识别为单指滑动时，选择“滚动页面”即可恢复正常滚动。默认的“自动”只作用于外接鼠标和触控板，不影响手指操作。": {
+      "zh-Hans": "外接鼠标的滚轮被系统识别为单指滑动时，选择“滚动页面”即可恢复正常滚动。默认的“自动”只作用于外接鼠标和触控板，不影响手指操作。",
+      "en": "When the system reports a mouse wheel as a one-finger swipe, choose “Scroll page” to scroll content normally. The default “Automatic” only applies to mice and trackpads, so finger input is unchanged.",
+      "ru": "Если система передаёт колесо мыши как свайп одним пальцем, выберите «Прокрутка страницы». Режим «Автоматически» действует только на мышь и тачпад и не меняет управление пальцем.",
+      "zh-Hant": "外接滑鼠的滾輪被系統辨識為單指滑動時，選擇「捲動頁面」即可恢復正常捲動。預設的「自動」只作用於外接滑鼠和觸控板，不影響手指操作。",
+      "ja": "マウスホイールが1本指スワイプとして認識される場合、「ページをスクロール」を選ぶと通常どおりスクロールします。既定の「自動」はマウスとタッチパッドにのみ適用され、指の操作には影響しません。",
+      "ko": "마우스 휠이 한 손가락 밀기로 인식될 때 “페이지 스크롤”을 선택하면 정상적으로 스크롤됩니다. 기본값인 “자동”은 마우스와 터치패드에만 적용되며 손가락 조작에는 영향을 주지 않습니다.",
+      "de": "Meldet das System das Mausrad als Ein-Finger-Wischen, wählen Sie „Seite scrollen“. „Automatisch“ gilt nur für Maus und Touchpad und ändert die Fingerbedienung nicht.",
+      "fr": "Si le système signale la molette comme un balayage à un doigt, choisissez « Faire défiler ». Le mode « Automatique » ne s’applique qu’à la souris et au pavé tactile.",
+      "es": "Si el sistema informa la rueda del ratón como un deslizamiento con un dedo, elige «Desplazar página». El modo «Automático» solo afecta al ratón y al panel táctil.",
+      "pt-BR": "Se o sistema informar a roda do mouse como deslizar com um dedo, escolha “Rolar a página”. O modo “Automático” só afeta mouse e touchpad."
     }
   },
   "desktop": {
@@ -13393,7 +13441,12 @@
       "组内设备和连接记录将保留。",
       "保存失败，请重试",
       "全屏",
-      "退出全屏"
+      "退出全屏",
+      "自动",
+      "单指滑动",
+      "移动指针",
+      "滚动页面",
+      "外接鼠标的滚轮被系统识别为单指滑动时，选择“滚动页面”即可恢复正常滚动。默认的“自动”只作用于外接鼠标和触控板，不影响手指操作。"
     ],
     "ios": [
       "%1$@ 传输失败",

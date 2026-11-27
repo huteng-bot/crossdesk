@@ -31,15 +31,24 @@ final class RemoteVideoView extends FrameLayout implements SurfaceHolder.Callbac
     private final RemoteViewport pictureInPictureViewport = new RemoteViewport();
     private final RemoteWheel wheelInput = new RemoteWheel();
     private static final int MAX_WHEEL_NOTCHES = 8;
+    // A physical wheel that a vendor ROM reports as a one-finger drag instead of
+    // ACTION_SCROLL is converted back into notches, one per this much travel.
+    static final int SWIPE_AUTO = 0, SWIPE_POINTER = 1, SWIPE_SCROLL = 2;
+    private static final float SWIPE_NOTCH_DP = 24;
     private boolean pictureInPicture;
     private int frameWidth = 16, frameHeight = 9;
     private float x = .5f, y = .5f, scrollY;
     private boolean dragging, twoFinger, relative, pinching, viewportPanActive;
     private float lastX,lastY,twoFingerX,twoFingerY;
     private float pinchSpan;
+    private int touchSlop;
     private long touchRevision;
     private boolean suppressPointerGesture;
+    private int swipeMode = SWIPE_AUTO;
+    private boolean swipeCandidate, swipeScrolling;
+    private float swipeStartX, swipeStartY, swipeLastY, swipeRemainder;
     void setRelative(boolean value) { releaseMouse(); relative=value; }
+    void setSwipeMode(int mode) { swipeMode = Math.max(SWIPE_AUTO, Math.min(SWIPE_SCROLL, mode)); }
     void setPictureInPicture(boolean value) {
         if(pictureInPicture==value)return;
         releaseMouse();pictureInPicture=value;cursor.setVisibility(value?GONE:VISIBLE);fit();
@@ -64,7 +73,9 @@ final class RemoteVideoView extends FrameLayout implements SurfaceHolder.Callbac
         gestures = new GestureDetector(context, new GestureDetector.SimpleOnGestureListener() {
             @Override public boolean onDown(MotionEvent e) { return point(e); }
             @Override public boolean onSingleTapUp(MotionEvent e) {
-                if (!twoFinger && !suppressPointerGesture() && point(e)) cursor.performClick(); return true;
+                // A wheel reported as a one-finger swipe must not also click; the
+                // physical button is what clicks for a mouse.
+                if (!twoFinger && !swipeCandidate && !suppressPointerGesture() && point(e)) cursor.performClick(); return true;
             }
             @Override public void onLongPress(MotionEvent e) { if (!twoFinger && !dragging && !suppressPointerGesture() && point(e)) click(3, 4); }
             @Override public boolean onScroll(MotionEvent first, MotionEvent current, float dx, float dy) {
@@ -80,6 +91,7 @@ final class RemoteVideoView extends FrameLayout implements SurfaceHolder.Callbac
         gestures.setOnDoubleTapListener(null);
         // Detect a change in finger spacing even when the fingers start close together.
         pinchSlop = ViewConfiguration.get(context).getScaledTouchSlop() * .5f;
+        touchSlop = ViewConfiguration.get(context).getScaledTouchSlop();
         setContentDescription(L10n.tr("远程桌面：轻触点击，拖动移动，长按右键，双指捏合缩放，放大后双指拖动画面，原始比例下双指上下滑动滚动"));
     }
     /**
@@ -261,6 +273,7 @@ final class RemoteVideoView extends FrameLayout implements SurfaceHolder.Callbac
             if ((e.getButtonState() & MotionEvent.BUTTON_SECONDARY) != 0 && action == MotionEvent.ACTION_DOWN) {
                 if (point(e)) click(3,4); return true;
             }
+            if (wheelSwipe(e)) return true;
             gestures.onTouchEvent(e);
         }
         if (action == MotionEvent.ACTION_UP || action == MotionEvent.ACTION_CANCEL) {
@@ -270,6 +283,78 @@ final class RemoteVideoView extends FrameLayout implements SurfaceHolder.Callbac
             viewportPanActive = false;
         }
         return true;
+    }
+    /**
+     * Reinterprets a single-finger swipe as wheel notches. Several Huawei and
+     * HarmonyOS tablets report a physical wheel detent as a one-finger drag
+     * rather than ACTION_SCROLL; the default handler turns that into a remote
+     * pointer drag, so the whole screen slides instead of the page scrolling.
+     *
+     * A swipe only qualifies once it moves decisively along one axis, and the
+     * gesture detector is cancelled at that point so the rest of the swipe can
+     * never become a drag or a tap. Finger input is untouched: {@code SWIPE_AUTO}
+     * converts only events that came from a mouse or trackpad.
+     *
+     * @return true when the event belonged to a wheel swipe and was consumed.
+     */
+    private boolean wheelSwipe(MotionEvent e) {
+        int action = e.getActionMasked();
+        if (action == MotionEvent.ACTION_DOWN) {
+            swipeStartX = e.getX(); swipeStartY = swipeLastY = e.getY();
+            swipeScrolling = false; swipeRemainder = 0;
+            swipeCandidate = wheelSwipeCandidate(e);
+            return false;
+        }
+        if (action == MotionEvent.ACTION_UP || action == MotionEvent.ACTION_CANCEL) {
+            boolean consuming = swipeScrolling;
+            // Drop both flags so a cancelled or finished swipe leaves no state.
+            swipeScrolling = false; swipeCandidate = false; swipeRemainder = 0;
+            return consuming;
+        }
+        if (action != MotionEvent.ACTION_MOVE || !swipeCandidate) return false;
+        if (!swipeScrolling) {
+            float dy = e.getY() - swipeStartY, dx = e.getX() - swipeStartX;
+            // A wheel drives one axis; a real finger drag wanders in both.
+            if (Math.abs(dy) < touchSlop || Math.abs(dy) <= Math.abs(dx)) return false;
+            // A drag may have started before the axis was known; undo it first.
+            if (dragging) { mouseInput.gestureLeft(false); dragging = false; }
+            MotionEvent cancel = MotionEvent.obtain(e);
+            cancel.setAction(MotionEvent.ACTION_CANCEL);
+            gestures.onTouchEvent(cancel); cancel.recycle();
+            swipeScrolling = true; swipeLastY = swipeStartY; swipeRemainder = 0;
+        }
+        float step = e.getY() - swipeLastY;
+        swipeLastY = e.getY();
+        if (!Float.isFinite(step) || step == 0) return true;
+        // Positive travel scrolls up, matching the two-finger gesture below.
+        swipeRemainder += step / (SWIPE_NOTCH_DP * getResources().getDisplayMetrics().density);
+        int notches = (int) swipeRemainder;
+        if (notches == 0) return true;
+        swipeRemainder -= notches;
+        notches = Math.max(-MAX_WHEEL_NOTCHES, Math.min(MAX_WHEEL_NOTCHES, notches));
+        session.pointer(x, y, 7, notches);
+        cursor.invalidate();
+        return true;
+    }
+    /** Decides whether this gesture may be read as a wheel at all. */
+    private boolean wheelSwipeCandidate(MotionEvent e) {
+        if (pictureInPicture || suppressPointerGesture() || mouseInput.hasVirtualButton()) return false;
+        // A real mouse drag keeps its tool type and its button state; leave it.
+        if (e.getToolType(0) == MotionEvent.TOOL_TYPE_MOUSE) return false;
+        int buttons = e.getButtonState();
+        if ((buttons & (MotionEvent.BUTTON_PRIMARY | MotionEvent.BUTTON_SECONDARY
+                | MotionEvent.BUTTON_TERTIARY)) != 0) return false;
+        return swipeMode == SWIPE_SCROLL || (swipeMode == SWIPE_AUTO && fromPointerDevice(e));
+    }
+    /** True when the event came from a mouse or trackpad rather than a finger. */
+    private static boolean fromPointerDevice(MotionEvent e) {
+        if (isPointerSource(e.getSource())) return true;
+        android.view.InputDevice device = e.getDevice();
+        return device != null && isPointerSource(device.getSources());
+    }
+    private static boolean isPointerSource(int sources) {
+        return (sources & android.view.InputDevice.SOURCE_MOUSE) == android.view.InputDevice.SOURCE_MOUSE
+                || (sources & android.view.InputDevice.SOURCE_TOUCHPAD) == android.view.InputDevice.SOURCE_TOUCHPAD;
     }
     private void updateTwoFingers(MotionEvent event) {
         int action = event.getActionMasked();

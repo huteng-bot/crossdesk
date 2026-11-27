@@ -394,4 +394,9 @@
     <string name="text_f42a1238b44a4858" formatted="false">"保存失败，请重试"</string>
     <string name="text_22ea3f47fee80536" formatted="false">"全屏"</string>
     <string name="text_0f1505b6ad3fafe4" formatted="false">"退出全屏"</string>
+    <string name="text_7eb336e42cb5076b" formatted="false">"自动"</string>
+    <string name="text_4be8ef31832c6fae" formatted="false">"单指滑动"</string>
+    <string name="text_285ffeb6233ebfc2" formatted="false">"移动指针"</string>
+    <string name="text_449dfbcab15f2900" formatted="false">"滚动页面"</string>
+    <string name="text_5c46c07b97d7f3ac" formatted="false">"外接鼠标的滚轮被系统识别为单指滑动时，选择“滚动页面”即可恢复正常滚动。默认的“自动”只作用于外接鼠标和触控板，不影响手指操作。"</string>
 </resources>

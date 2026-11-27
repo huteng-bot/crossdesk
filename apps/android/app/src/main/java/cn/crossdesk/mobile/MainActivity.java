@@ -558,7 +558,7 @@ public final class MainActivity extends Activity implements NativeSession.Listen
     private void sessionScreen(boolean autoLandscape){
         // Fullscreen defaults on for phones and tablets; the choice survives reconnect.
         fullScreen=preferences.getBoolean("sessionFullscreen",true);
-        installRoot("session",true);remoteOrientation.begin(autoLandscape,!isTablet()&&!isInMultiWindowMode());video=new RemoteVideoView(this,session);video.setRelative(preferences.getBoolean("relativeMouse",true));
+        installRoot("session",true);remoteOrientation.begin(autoLandscape,!isTablet()&&!isInMultiWindowMode());video=new RemoteVideoView(this,session);video.setRelative(preferences.getBoolean("relativeMouse",true));video.setSwipeMode(preferences.getInt("swipeScroll",RemoteVideoView.SWIPE_AUTO));
         // Video, cursor and touch input must share the area inside system bars
         // and display cutouts; fitting to the outer canvas hides image edges.
         safeArea.addView(video,0,new FrameLayout.LayoutParams(-1,-1));
@@ -608,6 +608,10 @@ public final class MainActivity extends Activity implements NativeSession.Listen
         LinearLayout content=formPage("settings",L10n.tr("设置"),()->home(""));
         LinearLayout mouse=section(content,L10n.tr("鼠标控制"),MobileUi.SETTINGS_CARD_RADIUS);mouse.setPadding(dp(12),dp(12),dp(12),dp(12));boolean relative=preferences.getBoolean("relativeMouse",true);
         mouse.addView(segments(new String[]{L10n.tr("相对位置"),L10n.tr("绝对位置")},relative?0:1,true,index->preferences.edit().putBoolean("relativeMouse",index==0).apply()));
+        TextView swipeTitle=text(L10n.tr("单指滑动"),14,false);swipeTitle.setTextColor(SECONDARY);swipeTitle.setPadding(dp(4),dp(14),dp(4),dp(6));mouse.addView(swipeTitle);
+        int swipe=Math.max(RemoteVideoView.SWIPE_AUTO,Math.min(RemoteVideoView.SWIPE_SCROLL,preferences.getInt("swipeScroll",RemoteVideoView.SWIPE_AUTO)));
+        mouse.addView(segments(new String[]{L10n.tr("自动"),L10n.tr("移动指针"),L10n.tr("滚动页面")},swipe,true,index->{preferences.edit().putInt("swipeScroll",index).apply();if(video!=null)video.setSwipeMode(index);}));
+        footer(content,L10n.tr("外接鼠标的滚轮被系统识别为单指滑动时，选择“滚动页面”即可恢复正常滚动。默认的“自动”只作用于外接鼠标和触控板，不影响手指操作。"));
         LinearLayout picture=section(content,L10n.tr("画面偏好"),MobileUi.SETTINGS_CARD_RADIUS);picture.setPadding(dp(12),dp(12),dp(12),dp(12));int preference=Math.max(0,Math.min(2,preferences.getInt("videoPreference",1)));
         picture.addView(segments(RemoteVideoSettings.preferences(),preference,true,index->preferences.edit().putInt("videoPreference",index).apply()));ui.gap(content,28);
         LinearLayout direction=section(content,L10n.tr("屏幕方向"),MobileUi.SETTINGS_CARD_RADIUS);LinearLayout directionRow=row();directionRow.setPadding(dp(16),dp(10),dp(16),dp(10));directionRow.addView(text(L10n.tr("连接建立后锁定横屏"),16,false),new LinearLayout.LayoutParams(0,-2,1));
@@ -1020,7 +1024,7 @@ public final class MainActivity extends Activity implements NativeSession.Listen
     // Forwarding it here gives the video surface the wheel regardless of which
     // child holds focus, which the old cursor-view listener did not guarantee.
     @Override public boolean dispatchGenericMotionEvent(MotionEvent event){
-        if(ready&&video!=null&&!pictureInPictureUi&&hasWindowFocus()&&isMouseSource(event)){
+        if(ready&&video!=null&&!pictureInPictureUi&&hasWindowFocus()&&acceptsWheel(event)){
             // The open control menu is modal and scrolls itself. A dialog has
             // its own window and takes focus, so hasWindowFocus() excludes it.
             if(controls==null||!controls.holdsMouseWheel()){
@@ -1029,10 +1033,22 @@ public final class MainActivity extends Activity implements NativeSession.Listen
         }
         return super.dispatchGenericMotionEvent(event);
     }
+    /**
+     * A touch surface cannot produce ACTION_SCROLL, so that action is always the
+     * wheel whatever source the vendor stack labels it with. Previously only
+     * SOURCE_MOUSE was accepted, and the events a ROM labelled differently fell
+     * through to the focused page instead of the session.
+     */
+    private static boolean acceptsWheel(MotionEvent event){
+        return event.getActionMasked()==MotionEvent.ACTION_SCROLL||isMouseSource(event);
+    }
     /** Mice and trackpads both set SOURCE_MOUSE, often with extra source bits. */
     private static boolean isMouseSource(MotionEvent event){
         int source=event.getSource();
-        return (source&InputDevice.SOURCE_MOUSE)==InputDevice.SOURCE_MOUSE;
+        if((source&InputDevice.SOURCE_MOUSE)==InputDevice.SOURCE_MOUSE)return true;
+        if((source&InputDevice.SOURCE_TOUCHPAD)==InputDevice.SOURCE_TOUCHPAD)return true;
+        InputDevice device=event.getDevice();
+        return device!=null&&(device.getSources()&(InputDevice.SOURCE_MOUSE|InputDevice.SOURCE_TOUCHPAD))!=0;
     }
     @Override public boolean dispatchKeyEvent(KeyEvent event){
         if (privacyUnlockDialog != null) return super.dispatchKeyEvent(event);

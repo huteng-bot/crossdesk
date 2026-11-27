@@ -394,4 +394,9 @@
     <string name="text_f42a1238b44a4858" formatted="false">"Could not save; try again"</string>
     <string name="text_22ea3f47fee80536" formatted="false">"Fullscreen"</string>
     <string name="text_0f1505b6ad3fafe4" formatted="false">"Exit fullscreen"</string>
+    <string name="text_7eb336e42cb5076b" formatted="false">"Auto"</string>
+    <string name="text_4be8ef31832c6fae" formatted="false">"One-finger swipe"</string>
+    <string name="text_285ffeb6233ebfc2" formatted="false">"Move pointer"</string>
+    <string name="text_449dfbcab15f2900" formatted="false">"Scroll page"</string>
+    <string name="text_5c46c07b97d7f3ac" formatted="false">"When the system reports a mouse wheel as a one-finger swipe, choose “Scroll page” to scroll content normally. The default “Automatic” only applies to mice and trackpads, so finger input is unchanged."</string>
 </resources>

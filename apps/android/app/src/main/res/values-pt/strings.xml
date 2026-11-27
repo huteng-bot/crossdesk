@@ -394,4 +394,9 @@
     <string name="text_f42a1238b44a4858" formatted="false">"Não foi possível salvar; tente novamente"</string>
     <string name="text_22ea3f47fee80536" formatted="false">"Tela cheia"</string>
     <string name="text_0f1505b6ad3fafe4" formatted="false">"Sair da tela cheia"</string>
+    <string name="text_7eb336e42cb5076b" formatted="false">"Automático"</string>
+    <string name="text_4be8ef31832c6fae" formatted="false">"Deslizar com um dedo"</string>
+    <string name="text_285ffeb6233ebfc2" formatted="false">"Mover o ponteiro"</string>
+    <string name="text_449dfbcab15f2900" formatted="false">"Rolar a página"</string>
+    <string name="text_5c46c07b97d7f3ac" formatted="false">"Se o sistema informar a roda do mouse como deslizar com um dedo, escolha “Rolar a página”. O modo “Automático” só afeta mouse e touchpad."</string>
 </resources>

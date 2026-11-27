@@ -400,6 +400,11 @@ final class LocalizationKeys {
         IDS.put("保存失败，请重试", R.string.text_f42a1238b44a4858);
         IDS.put("全屏", R.string.text_22ea3f47fee80536);
         IDS.put("退出全屏", R.string.text_0f1505b6ad3fafe4);
+        IDS.put("自动", R.string.text_7eb336e42cb5076b);
+        IDS.put("单指滑动", R.string.text_4be8ef31832c6fae);
+        IDS.put("移动指针", R.string.text_285ffeb6233ebfc2);
+        IDS.put("滚动页面", R.string.text_449dfbcab15f2900);
+        IDS.put("外接鼠标的滚轮被系统识别为单指滑动时，选择“滚动页面”即可恢复正常滚动。默认的“自动”只作用于外接鼠标和触控板，不影响手指操作。", R.string.text_5c46c07b97d7f3ac);
     }
     private LocalizationKeys() {}
 }
